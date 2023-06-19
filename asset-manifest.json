@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/react-gh-pages/static/css/main.97ea91dd.css",
-    "main.js": "/react-gh-pages/static/js/main.7d7781d0.js",
-    "static/js/787.c38dfdff.chunk.js": "/react-gh-pages/static/js/787.c38dfdff.chunk.js",
-    "index.html": "/react-gh-pages/index.html",
-    "main.97ea91dd.css.map": "/react-gh-pages/static/css/main.97ea91dd.css.map",
-    "main.7d7781d0.js.map": "/react-gh-pages/static/js/main.7d7781d0.js.map",
-    "787.c38dfdff.chunk.js.map": "/react-gh-pages/static/js/787.c38dfdff.chunk.js.map"
+    "main.css": "/react-tetris-app/static/css/main.97ea91dd.css",
+    "main.js": "/react-tetris-app/static/js/main.772d94b7.js",
+    "static/js/787.c38dfdff.chunk.js": "/react-tetris-app/static/js/787.c38dfdff.chunk.js",
+    "index.html": "/react-tetris-app/index.html",
+    "main.97ea91dd.css.map": "/react-tetris-app/static/css/main.97ea91dd.css.map",
+    "main.772d94b7.js.map": "/react-tetris-app/static/js/main.772d94b7.js.map",
+    "787.c38dfdff.chunk.js.map": "/react-tetris-app/static/js/787.c38dfdff.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.97ea91dd.css",
-    "static/js/main.7d7781d0.js"
+    "static/js/main.772d94b7.js"
   ]
 }

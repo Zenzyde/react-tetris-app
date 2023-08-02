@@ -20,7 +20,7 @@ function BackgroundConfetti({confettis, onAnimEnd}: Props) {
 				canRender && confettis?.map((confetti: ConfettiObject, id: number, arr: ConfettiObject[]) => {
 					return (
 						<div>
-							<ReactConfetti tweenDuration={500} recycle={false} numberOfPieces={10 * confetti.size} confettiSource={{ x: x, y: y, w: 2, h: 2 }} onConfettiComplete={() => onAnimEnd(confetti.id)} />
+							<ReactConfetti key={"confetti_" + id} tweenDuration={500} recycle={false} numberOfPieces={10 * confetti.size} confettiSource={{ x: x, y: y, w: 2, h: 2 }} onConfettiComplete={() => onAnimEnd(confetti.id)} />
 						</div>
 					)
 				})

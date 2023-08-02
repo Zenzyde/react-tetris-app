@@ -15,14 +15,14 @@ enum TickSpeed {
 // Handles user input and game logic (ex: keeping score) and acts as a wrapper for the 'useTetrisBoard'-hook
 export function useTetris() {
 
-	const [score, setScore] = useState(0);
+	const [preScore, setPreScore] = useState(0);
+	const [newScore, setNewScore] = useState(0);
 	// Creating the upcoming blocks object hook, initialized as an empty array
 	const [upcomingBlocks, setUpcomingBlocks] = useState<Block[]>([]);
 	const [isCommitting, setIsCommitting] = useState(false);
 	const [isPlaying, setIsPlaying] = useState(false);
 	// Creating the tickspeed handling object hook, initialized as null (maybe because null is intepreted as 0/first enum value)
 	const [tickSpeed, setTickSpeed] = useState<TickSpeed | null>(null);
-	const [isDebugging, setIsDebugging] = useState(false);
 	const [numConfetti, setNumConfetti] = useState<ConfettiObject[]>([]);
 
 	// Creating helper object hook which represents the current tetris board state, the rows and columns of the board and the various blocks currently in the board
@@ -41,13 +41,13 @@ export function useTetris() {
 			getRandomBlock()
 		];
 		// Perform setup of score, visual upcoming blocks, commit-state, playing-state, tick speed, and let the visual board know that the game is starting
-		setScore(0);
+		setPreScore(0);
+		setNewScore(0);
 		setUpcomingBlocks(startingBlocks);
 		setIsCommitting(false);
 		setIsPlaying(true);
 		setTickSpeed(TickSpeed.Normal);
 		dispatchBoardState({ type: 'start' });
-		setIsDebugging(false);
 		setNumConfetti([]);
 	}, [dispatchBoardState]);
 
@@ -108,7 +108,8 @@ export function useTetris() {
 		// Update the upcoming blocks for visualization
 		setUpcomingBlocks(newUpcomingBlocks);
 		// Update the score based on the number of cleared blocks
-		setScore((prevScore) => prevScore + getPoints(numCleared));
+		setPreScore((preScore) => preScore = newScore);
+		setNewScore((prevScore) => prevScore + getPoints(numCleared));
 		// 'dispatch' the event/'setter' to the visual board to let it perform any needed visual updates based on the 'commit'-action, and give it the updated board and next block to drop to work with
 		dispatchBoardState({ type: 'commit', newBoard: [...getEmptyBoard(BOARD_HEIGHT - newBoard.length), ...newBoard], newBlock });
 		// Lastly, unset the 'commit'-flag
@@ -146,9 +147,6 @@ export function useTetris() {
 		if (!isPlaying) {
 			return;
 		}
-		// if (isDebugging) {
-		// 	return;
-		// }
 
 		// We're still playing, so keep dropping blocks and ticking
 		gameTick();
@@ -209,10 +207,6 @@ export function useTetris() {
 				isPressingRight = true;
 				updateMovementInterval();
 			}
-
-			// if (event.key === 'Spacebar') {
-			// 	setIsDebugging(!isDebugging);
-			// }
 		};
 
 		const handleKeyUp = (event: KeyboardEvent) => {
@@ -259,7 +253,8 @@ export function useTetris() {
 		board: renderedBoard,
 		startGame,
 		isPlaying,
-		score,
+		preScore,
+		newScore,
 		upcomingBlocks,
 		numConfetti,
 		removeConfetti

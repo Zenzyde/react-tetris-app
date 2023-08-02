@@ -13,7 +13,6 @@ import CountUp from 'react-countup';
 // Reference: https://github.com/ConnerArdman/tetris-react
 // -- https://www.youtube.com/watch?v=UuzcvFVH4DQ
 // Grid centering reference: https://stackoverflow.com/questions/45536537/centering-in-css-grid
-// Github database access token: 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
 // Gitrows: https://github.com/gitrows/gitrows
 // -- trying to use gitrows/github-db introduced errors because of trying to use a javascript-package in typescript, decided to try and install react-app-rewired & stream-browserify (among others) and change some config values
 // Changes ref: https://www.alchemy.com/blog/how-to-polyfill-node-core-modules-in-webpack-5

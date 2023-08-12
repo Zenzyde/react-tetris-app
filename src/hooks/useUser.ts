@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { User } from "../types";
 
 const dbPath: string | undefined = process.env.REACT_APP_GIT_DB_PATH;
+const dbToken: string | undefined = process.env.REACT_APP_GIT_DB_TOKEN;
 
 const dbOptions = {
 	server: undefined,
@@ -11,7 +12,7 @@ const dbOptions = {
 	branch: 'master',
 	path: dbPath,
 	user: 'Zenzyde',
-	token: process.env.REACT_APP_GIT_DB_API_TOKEN,
+	token: dbToken,
 	csv: { delimiter: ',' },
 	type: 'json'
 };

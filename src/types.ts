@@ -18,11 +18,6 @@ export type ConfettiObject = {
 	confettiAlive: boolean;
 }
 
-export type User = {
-	id: string;
-	highscore: number;
-}
-
 export type CellOptions = Block | EmptyCell; // Each cell can either be an enum representing the various tetris shapes, or an empty cell
 
 export type BoardShape = CellOptions[][];

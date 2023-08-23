@@ -1,21 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import './App.css';
 import Board from './components/Board';
 import { useTetris } from './hooks/useTetris';
 import UpcomingBlocks from './components/UpcomingBlocks';
 import BackgroundConfetti from './components/BackgroundConfetti';
-import UserScoreRegisterCard from './components/UserScoreRegisterCard';
-import Leaderboard from './components/Leaderboard';
-import { User } from './types';
-import { useUser } from './hooks/useUser';
 import CountUp from 'react-countup';
 
 // Reference: https://github.com/ConnerArdman/tetris-react
 // -- https://www.youtube.com/watch?v=UuzcvFVH4DQ
 // Grid centering reference: https://stackoverflow.com/questions/45536537/centering-in-css-grid
-// Gitrows: https://github.com/gitrows/gitrows
-// -- trying to use gitrows/github-db introduced errors because of trying to use a javascript-package in typescript, decided to try and install react-app-rewired & stream-browserify (among others) and change some config values
-// Changes ref: https://www.alchemy.com/blog/how-to-polyfill-node-core-modules-in-webpack-5
 
 function App() {
 	
@@ -23,9 +16,7 @@ function App() {
 	const { board, startGame, isPlaying, preScore, newScore, upcomingBlocks, numConfetti, removeConfetti } = useTetris();
 	const [gameStarted, setIsGameStarted] = useState(false); // Used to disable the 'Start Game' button when clicking, so that it can be displayed but not clicked again until game over
 	
-	const { updateUserHighscore, isScoreRegisterWindowOpen, setScoreRegisterWindowOpen, getLeaderboardData } = useUser(); // setup user score hook
-	
-	if (gameStarted && !isPlaying) { setIsGameStarted(false); setScoreRegisterWindowOpen(true); }
+	if (gameStarted && !isPlaying) { setIsGameStarted(false); }
 	
 	return (
 		<div className="App grid grid-cols-5 flex-row h-screen bg-gradient-to-tr from-cyan-500 to-slate-200">
@@ -43,7 +34,6 @@ function App() {
 						}
 					</CountUp>
 				</div>
-				<Leaderboard users={getLeaderboardData} />
 			</div>
 			<div className='RightSide col-span-1 row-span-1 col-start-5 row-start-2 grid grid-rows-4 border-4 rounded-lg border-black bg-blue-400'>
 				<div className='Button col-span-1 col-start-1 col-end-1 row-span-1 row-start-2 flex self-end justify-center'>
@@ -54,7 +44,6 @@ function App() {
 					{isPlaying && <UpcomingBlocks upcomingBlocks={upcomingBlocks} /> /* If the game is active, display the upcoming blocks */}
 				</div>
 			</div>
-			<UserScoreRegisterCard exit={setScoreRegisterWindowOpen} submitScore={updateUserHighscore} score={newScore} showForm={isScoreRegisterWindowOpen} />
 		</div>
 	);
 }

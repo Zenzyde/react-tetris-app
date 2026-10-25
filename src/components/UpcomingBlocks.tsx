@@ -17,7 +17,7 @@ enum CellColor { // Using an enum because of using tailwind instead of 'regular'
 
 function UpcomingBlocks({ upcomingBlocks }: Props) {
 	return (
-		<div className="upcoming flex flex-row-reverse gap-[10px] border-2 border-black bg-slate-200 h-fit w-fit p-2 items-center self-center">
+		<div className="flex flex-row-reverse md:flex-col-reverse gap-[12px] md:gap-[50px] rounded-lg border-2 border-black h-fit w-fit p-3 md:p-14 items-center justify-self-center">
 			{upcomingBlocks.map((block, blockIndex) => { // Iterate through all the upcoming blocks
 				// Get the starting shape of the block, and filter out the parts of the shape that are not filled in
 				const shape = SHAPES[block].shape.filter((row) =>
@@ -33,7 +33,7 @@ function UpcomingBlocks({ upcomingBlocks }: Props) {
 										// Set the color of the blocks based on the Block-enum, with the option of 'invisible' if that cell of the block is not filled in
 										const cellClass = isSet ? block : 'hidden';
 										return (
-											<div key={`${blockIndex}-${rowIndex}-${cellIndex}`} className={`cell hid w-[20px] aspect-square border-solid border-[1px] border-black ${CellColor[cellClass]}`}></div>
+											<div key={`${blockIndex}-${rowIndex}-${cellIndex}`} className={`cell w-[7px] md:w-[30px] aspect-square border-solid border-[1px] border-black ${CellColor[cellClass]}`}></div>
 										);
 									})}
 								</div>

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { getRandomBlock, hasCollisions, BOARD_HEIGHT, useTetrisBoard, getEmptyBoard, BOARD_WIDTH, getNewConfettiObject } from "./useTetrisBoard";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getRandomBlock, hasCollisions, BOARD_HEIGHT, useTetrisBoard, getEmptyBoard, getNewConfettiObject } from "./useTetrisBoard";
 import { useInterval } from "./useInterval";
 import { BoardShape, Block, BlockShape, EmptyCell, SHAPES } from "../types";
 import { ConfettiObject } from "../types";
@@ -25,12 +25,20 @@ export function useTetris() {
 	const [tickSpeed, setTickSpeed] = useState<TickSpeed | null>(null);
 	const [numConfetti, setNumConfetti] = useState<ConfettiObject[]>([]);
 
+	const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+	const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+	const minSwipeDistance = 50; // Minimum distance for a swipe to be considered valid
+
 	// Creating helper object hook which represents the current tetris board state, the rows and columns of the board and the various blocks currently in the board
 	// Also provides what i'm assuming to be a dispatch event/'setter' when the board state is updated, this dispatche event/'setter' is provided by 'useTetrisBoard'
 	const [
-		{ board, droppingRow, droppingColumn, droppingBlock, droppingShape },
+		boardState,
 		dispatchBoardState
 	] = useTetrisBoard();
+	const { board, droppingRow, droppingColumn, droppingBlock, droppingShape, boardRotation } = boardState;
+	// Latest board state as held by the reducer, so commits act on the actual piece position rather than a possibly stale callback closure
+	const latestBoardState = useRef(boardState);
+	latestBoardState.current = boardState;
 
 	// Callback to start the game, handles the logical initialization of the game
 	const startGame = useCallback(() => {
@@ -53,6 +61,7 @@ export function useTetris() {
 
 	// Callback to initialize a commit of a block to its current position
 	const commitPosition = useCallback(() => {
+		const { board, droppingRow, droppingColumn, droppingBlock, droppingShape } = latestBoardState.current;
 		// There is a possibility that isCommitting was set in gameTick, but that the player slided away from the collision
 		// -- check if a collision is not happening anymore, and if it isn't, unset isCommitting, reset tick speed and exit the callback
 		if (!hasCollisions(board, droppingShape, droppingRow + 1, droppingColumn)) {
@@ -79,6 +88,9 @@ export function useTetris() {
 			}
 		}
 
+		// The board after the commit and any cleared rows, with the empty rows padded back on top
+		const committedBoard = [...getEmptyBoard(BOARD_HEIGHT - newBoard.length), ...newBoard];
+
 		if (numCleared > 0) {
 			// Add a confetti object to the array
 			const newConfetti = numConfetti;
@@ -92,7 +104,7 @@ export function useTetris() {
 		newUpcomingBlocks.unshift(getRandomBlock());
 
 		// As the next block is gonna drop, check if there is any possbility of the new block colliding immediately
-		if (hasCollisions(board, SHAPES[newBlock].shape, 0, 3)) { // -- if so, we've run out of room and the player has lost the game. Game Over!!
+		if (hasCollisions(committedBoard, SHAPES[newBlock].shape, 0, droppingColumn)) { // -- if so, we've run out of room and the player has lost the game. Game Over!!
 			// Set isPlaying to false to disable the tick-loop and end the game
 			setIsPlaying(false);
 			// Set tickspeed to 0
@@ -111,10 +123,10 @@ export function useTetris() {
 		setPreScore((preScore) => preScore = newScore);
 		setNewScore((prevScore) => prevScore + getPoints(numCleared));
 		// 'dispatch' the event/'setter' to the visual board to let it perform any needed visual updates based on the 'commit'-action, and give it the updated board and next block to drop to work with
-		dispatchBoardState({ type: 'commit', newBoard: [...getEmptyBoard(BOARD_HEIGHT - newBoard.length), ...newBoard], newBlock });
+		dispatchBoardState({ type: 'commit', newBoard: committedBoard, newBlock });
 		// Lastly, unset the 'commit'-flag
 		setIsCommitting(false);
-	}, [board, dispatchBoardState, droppingBlock, droppingColumn, droppingRow, droppingShape, upcomingBlocks]);
+	}, [dispatchBoardState, upcomingBlocks]);
 
 	// Callback for removing oldest confetti
 	const removeConfetti = useCallback((confettiId: number) => {
@@ -160,7 +172,7 @@ export function useTetris() {
 
 		let isPressingLeft = false;
 		let isPressingRight = false;
-		let moveIntervalID: number | undefined | NodeJS.Timer;
+		let moveIntervalID: ReturnType<typeof setInterval> | undefined;
 
 		// Let the visual board know to move the dropping block either left or right
 		// Using local booleans for this which can be controlled by the key up/down events
@@ -225,32 +237,117 @@ export function useTetris() {
 			}
 		};
 
+		const handleTouchStart = (event: TouchEvent) => {
+			if (event.touches.length === 0) {
+				return;
+			}
+
+			setTouchStart({
+				x: event.touches[0].clientX,
+				y: event.touches[0].clientY
+			});
+
+			setTouchEnd(null); // Reset the touch end position when a new touch starts
+		};
+
+		const handleTouchMove = (event: TouchEvent) => {
+			if (event.touches.length === 0) { // Make sure rotation only happens once per key press, to stop movement from bugging out
+				return;
+			}
+			setTouchEnd({
+				x: event.touches[0].clientX,
+				y: event.touches[0].clientY
+			});
+		};
+
+		const handleTouchEnd = (event: TouchEvent) => {
+			if (!touchStart || !touchEnd) {
+				return;
+			}
+
+			const deltaX = touchEnd.x - touchStart.x;
+			const deltaY = touchEnd.y - touchStart.y;
+
+			// Check if the swipe distance is significant enough
+			if (Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+				return;
+			}
+
+			// Determine the primary direction of the swipe
+			const isSwipeHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
+			if (isSwipeHorizontal) {
+				if (deltaX > 0) {
+					// Swipe right
+					isPressingRight = true;
+					updateMovementInterval();
+
+					setTimeout(() => {
+						isPressingRight = false;
+						updateMovementInterval();
+					}, 500);
+				} else {
+					// Swipe left
+					isPressingLeft = true;
+					updateMovementInterval();
+
+					setTimeout(() => {
+						isPressingLeft = false;
+						updateMovementInterval();
+					}, 500);
+				}
+			} else {
+				if (deltaY > 0) {
+					// Swipe down
+					setTickSpeed(TickSpeed.Fast);
+
+					setTimeout(() => {
+						setTickSpeed(TickSpeed.Normal);
+					}, 500);
+				}
+				if (deltaY < 0) {
+					// Swipe up
+					dispatchBoardState({
+						type: 'move',
+						isRotating: true
+					});
+				}
+			}
+		};
+
 		document.addEventListener('keydown', handleKeyDown);
 		document.addEventListener('keyup', handleKeyUp);
+		document.addEventListener('touchstart', handleTouchStart);
+		document.addEventListener('touchmove', handleTouchMove);
+		document.addEventListener('touchend', handleTouchEnd);
 		return () => {
 			document.removeEventListener('keydown', handleKeyDown);
 			document.removeEventListener('keyup', handleKeyUp);
+			document.removeEventListener('touchstart', handleTouchStart);
+			document.removeEventListener('touchmove', handleTouchMove);
+			document.removeEventListener('touchend', handleTouchEnd);
 			clearInterval(moveIntervalID);
 			setTickSpeed(TickSpeed.Normal);
 		};
 	}, [dispatchBoardState, isPlaying]);
 
-	// Create a visual clone of the original board, which potentially holds the currently dropping block as well
-	// -- this is because we don't add the dropping block shape to the board before its final position has been decided
-	const renderedBoard = structuredClone(board) as BoardShape;
-	// If playing is true, the currently dropping block should be displayed in the board
+	// The board holds only the settled blocks, the currently dropping block is returned separately so it can be shown at a fixed place on screen
+	// -- the dropping block is placed in screen columns, which are offset by how far the board has been turned
+	let droppingBoard: BoardShape | null = null;
 	if (isPlaying) {
-		addShapeToBoard(renderedBoard, droppingBlock, droppingShape, droppingRow, droppingColumn);
+		droppingBoard = getEmptyBoard();
+		addShapeToBoard(droppingBoard, droppingBlock, droppingShape, droppingRow, droppingColumn + boardRotation);
 	}
 
 	// Returning the logical state of the board:
-	// -- the visual clone state of the board
+	// -- the settled board state, the dropping block overlay and how far the board is turned, for visual display
 	// -- the start game function so that the game can be started
 	// -- the isPlaying boolean for visual updates depending on if the game is active or not
 	// -- the current score for displaying
 	// -- and the upcoming blocks for visual display
 	return {
-		board: renderedBoard,
+		board,
+		droppingBoard,
+		boardRotation,
 		startGame,
 		isPlaying,
 		preScore,
@@ -262,11 +359,13 @@ export function useTetris() {
 }
 
 function addShapeToBoard(board: BoardShape, droppingBlock: Block, droppingShape: BlockShape, droppingRow: number, droppingColumn: number) {
+	const boardWidth = board[0].length;
 	droppingShape.filter((row) => row.some((isSet) => isSet)) // Filter out the false values of any row in a given shape, those will not be rendered so they can be ignored
 		.forEach((row: boolean[], rowIndex: number) => { // For each row (boolean array) of the shape that is true
 			row.forEach((isSet: boolean, colIndex: number) => { // We render a block in the shape based on the 'isSet' property
 				if (isSet) { // And we render each block of the shape in the board at the dropping row + 'rowIndex' of the blocks shape and dropping column + 'columnIndex' of the blocks shape
-					board[droppingRow + rowIndex][droppingColumn + colIndex] = droppingBlock;
+					const column = ((droppingColumn + colIndex) % boardWidth + boardWidth) % boardWidth;
+					board[droppingRow + rowIndex][column] = droppingBlock;
 				}
 			});
 		});

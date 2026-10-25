@@ -1,10 +1,5 @@
 import { CellOptions } from "../types";
 
-interface Props {
-	type: CellOptions; // Props, representing the type of cell, and thus, cell colour that this cell should have based on the tetris-shape occupying this cell
-	id: string; // Unique identifier
-}
-
 enum CellColor { // Using an enum here because of tailwind, to parse the cell type to the proper colour
 	"Empty" = "bg-[#666666]",
 	"I" = "bg-[#50e3e6]",
@@ -16,8 +11,21 @@ enum CellColor { // Using an enum here because of tailwind, to parse the cell ty
 	"Z" = "bg-[#e34e4e]"
 }
 
-function Cell({ type, id }: Props) {
-	return <div id={id} className={`cell ${CellColor[type]} w-[30px] aspect-square border-solid border-[1px] border-black `} />;
+function CellToRadialColor(type: CellOptions): string {
+	let color = CellColor[type];
+	return color.replace("bg-[#", "#").replace("]", "");
 }
 
-export default Cell;
+interface PolarCellProps {
+    id: string;
+    d: string;
+    fill: CellOptions;
+    stroke?: string;
+    strokeWidth?: string;
+}
+
+function PolarCell({ id, d, fill, stroke, strokeWidth }: PolarCellProps) {
+	return <path id={id} d={d} fill={CellToRadialColor(fill)} stroke={stroke} strokeWidth={strokeWidth} />;
+}
+
+export default PolarCell;
